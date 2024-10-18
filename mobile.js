@@ -4,10 +4,8 @@ class Paper {
   holdingPaper = false;
   touchStartX = 0;
   touchStartY = 0;
-  touchMoveX = 0;
-  touchMoveY = 0;
-  touchEndX = 0;
-  touchEndY = 0;
+  touchX = 0;
+  touchY = 0;
   prevTouchX = 0;
   prevTouchY = 0;
   velX = 0;
@@ -18,18 +16,19 @@ class Paper {
   rotating = false;
 
   init(paper) {
-    paper.addEventListener("touchmove", (e) => {
-      e.preventDefault();
+    // Touchmove event
+    document.addEventListener("touchmove", (e) => {
       if (!this.rotating) {
-        this.touchMoveX = e.touches[0].clientX;
-        this.touchMoveY = e.touches[0].clientY;
+        const touch = e.touches[0]; // Get the first touch point
+        this.touchX = touch.clientX;
+        this.touchY = touch.clientY;
 
-        this.velX = this.touchMoveX - this.prevTouchX;
-        this.velY = this.touchMoveY - this.prevTouchY;
+        this.velX = this.touchX - this.prevTouchX;
+        this.velY = this.touchY - this.prevTouchY;
       }
 
-      const dirX = e.touches[0].clientX - this.touchStartX;
-      const dirY = e.touches[0].clientY - this.touchStartY;
+      const dirX = this.touchX - this.touchStartX;
+      const dirY = this.touchY - this.touchStartY;
       const dirLength = Math.sqrt(dirX * dirX + dirY * dirY);
       const dirNormalizedX = dirX / dirLength;
       const dirNormalizedY = dirY / dirLength;
@@ -46,13 +45,14 @@ class Paper {
           this.currentPaperX += this.velX;
           this.currentPaperY += this.velY;
         }
-        this.prevTouchX = this.touchMoveX;
-        this.prevTouchY = this.touchMoveY;
+        this.prevTouchX = this.touchX;
+        this.prevTouchY = this.touchY;
 
         paper.style.transform = `translateX(${this.currentPaperX}px) translateY(${this.currentPaperY}px) rotateZ(${this.rotation}deg)`;
       }
     });
 
+    // Touchstart event
     paper.addEventListener("touchstart", (e) => {
       if (this.holdingPaper) return;
       this.holdingPaper = true;
@@ -60,22 +60,20 @@ class Paper {
       paper.style.zIndex = highestZ;
       highestZ += 1;
 
-      this.touchStartX = e.touches[0].clientX;
-      this.touchStartY = e.touches[0].clientY;
+      const touch = e.touches[0]; // Get the first touch point
+      this.touchStartX = touch.clientX;
+      this.touchStartY = touch.clientY;
       this.prevTouchX = this.touchStartX;
       this.prevTouchY = this.touchStartY;
-    });
-    paper.addEventListener("touchend", () => {
-      this.holdingPaper = false;
-      this.rotating = false;
+
+      if (e.touches.length > 1) { // If two fingers are on the screen
+        this.rotating = true; // Start rotating
+      }
     });
 
-    // For two-finger rotation on touch screens
-    paper.addEventListener("gesturestart", (e) => {
-      e.preventDefault();
-      this.rotating = true;
-    });
-    paper.addEventListener("gestureend", () => {
+    // Touchend event
+    window.addEventListener("touchend", () => {
+      this.holdingPaper = false;
       this.rotating = false;
     });
   }
